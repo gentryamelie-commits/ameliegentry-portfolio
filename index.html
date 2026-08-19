@@ -621,22 +621,22 @@ a{ color:inherit; text-decoration:none; }
 const A = "";
 // resolves to an inlined data-URI when packed into a standalone file, else the relative path
 function asset(p){ return (window.__ASSETS__ && window.__ASSETS__[p]) || p; }
-// order = the 12-country order requested; start centered on Italy (index 8)
+// order = the 12-country order requested; start centered on India (index 5)
 const CARDS = [
-  { slug:"albania",     country:"Albania",     region:"The Balkans",    sub:"Theth's hidden falls",        itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
-  { slug:"montenegro",  country:"Montenegro",  region:"The Balkans",    sub:"Still morning on the bay",     itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
-  { slug:"croatia",     country:"Croatia",     region:"The Balkans",    sub:"Sunset off the Dalmatian coast",itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
-  { slug:"india",       country:"India",       region:"India",          sub:"Dawn on the Ganges",          itin:"Color, Then Calm — a three-week passage from Delhi to the Kerala coast.", route:"Delhi → Rajasthan → Varanasi → Kerala · 3 weeks" },
-  { slug:"thailand",    country:"Thailand",    region:"Southeast Asia", sub:"Floating on Khao Sok",        itin:"", route:"" },
-  { slug:"vietnam",     country:"Vietnam",     region:"Southeast Asia", sub:"Through the Ninh Bình karsts",itin:"", route:"" },
   { slug:"cambodia",    country:"Cambodia",    region:"Southeast Asia", sub:"The floating villages",       itin:"", route:"" },
-  { slug:"france",      country:"France",      region:"Alpine Europe",  sub:"The canals of Annecy",        itin:"", route:"" },
+  { slug:"vietnam",     country:"Vietnam",     region:"Southeast Asia", sub:"Through the Ninh Bình karsts",itin:"", route:"" },
+  { slug:"montenegro",  country:"Montenegro",  region:"The Balkans",    sub:"Still morning on the bay",     itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
   { slug:"italy",       country:"Italy",       region:"Alpine Europe",  sub:"Above the Dolomites",         itin:"", route:"" },
+  { slug:"thailand",    country:"Thailand",    region:"Southeast Asia", sub:"Floating on Khao Sok",        itin:"", route:"" },
+  { slug:"india",       country:"India",       region:"India",          sub:"Dawn on the Ganges",          itin:"Color, Then Calm — a three-week passage from Delhi to the Kerala coast.", route:"Delhi → Rajasthan → Varanasi → Kerala · 3 weeks" },
+  { slug:"croatia",     country:"Croatia",     region:"The Balkans",    sub:"Sunset off the Dalmatian coast",itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
   { slug:"switzerland", country:"Switzerland", region:"Alpine Europe",  sub:"Over Gimmelwald",             itin:"", route:"" },
-  { slug:"indonesia",   country:"Indonesia",   region:"Indonesia",      sub:"Kelingking, Nusa Penida",     itin:"", route:"" },
+  { slug:"albania",     country:"Albania",     region:"The Balkans",    sub:"Theth's hidden falls",        itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
   { slug:"laos",        country:"Laos",        region:"Southeast Asia", sub:"Kuang Si Falls",              itin:"", route:"" },
-];
-const START = 8; // Italy
+  { slug:"indonesia",   country:"Indonesia",   region:"Indonesia",      sub:"Kelingking, Nusa Penida",     itin:"", route:"" },
+  { slug:"france",      country:"France",      region:"Alpine Europe",  sub:"The canals of Annecy",        itin:"", route:"" }
+  ];
+const START = 5; // India
 
 const track = document.getElementById('track');
 const dotsEl = document.getElementById('dots');
