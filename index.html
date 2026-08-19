@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amélie — Travel With Me</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --charcoal:      #191817;
+  --charcoal-deep: #121110;
+  --plaster:       #E9E4DA;
+  --plaster-dim:   #A39C90;
+  --hairline:      #2E2C29;
+  --rebate:        #C98F3F;
+  --display: 'Italiana', serif;
+  --body:    'EB Garamond', serif;
+  --mono:    'Courier Prime', monospace;
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+html{ height:100%; }
+body{ min-height:100%; background:var(--charcoal-deep); color:var(--plaster); font-family:var(--body); overflow:hidden; -webkit-font-smoothing:antialiased; }
+a{ color:inherit; text-decoration:none; }
+
+.stage::after{ content:""; position:fixed; inset:0; pointer-events:none; opacity:.05; z-index:70;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"); }
+
+.stage{ position:fixed; inset:0; display:flex; flex-direction:column; overflow:hidden; }
+
+/* immersive blurred background */
+.bg{ position:absolute; inset:0; z-index:0; }
+.bg-layer{ position:absolute; inset:-8%; background-size:cover; background-position:center;
+  filter:blur(30px) brightness(.62) saturate(1.05); opacity:0; transition:opacity 1.1s ease; transform:scale(1.12); }
+.bg-layer.show{ opacity:1; }
+.bg::after{ content:""; position:absolute; inset:0;
+  background:radial-gradient(130% 105% at 50% 42%, rgba(18,17,16,.05), rgba(18,17,16,.5) 100%),
+             linear-gradient(to bottom, rgba(18,17,16,.35), rgba(18,17,16,.08) 34%, rgba(18,17,16,.5)); }
+
+/* header */
+/* global fixed nav */
+.site-nav{ position:fixed; top:0; left:0; right:0; z-index:200; display:flex; justify-content:space-between; align-items:center;
+  padding:1.35rem clamp(1.25rem,5vw,4rem); pointer-events:none; }
+.site-nav::before{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(to bottom, rgba(10,9,8,.7) 0%, rgba(10,9,8,.35) 55%, rgba(10,9,8,0) 100%); }
+.site-nav > *{ pointer-events:auto; }
+.wordmark{ font-family:var(--display); font-size:1.55rem; letter-spacing:.34em; text-transform:uppercase; cursor:pointer;
+  color:var(--plaster); text-shadow:0 2px 16px rgba(0,0,0,.8); }
+.site-links{ display:flex; gap:2.4rem; }
+.site-links a{ font-family:var(--mono); font-weight:700; font-size:.74rem; letter-spacing:.18em; text-transform:uppercase; opacity:1; cursor:pointer;
+  color:var(--plaster); text-shadow:0 2px 14px rgba(0,0,0,.9); transition:color .3s; }
+.site-links a:hover, .site-links a.active{ color:var(--rebate); }
+.book{ font-family:var(--mono); font-size:.6rem; letter-spacing:.2em; text-transform:uppercase;
+  border:1px solid var(--rebate); color:var(--rebate); padding:.6rem 1.3rem; border-radius:2rem; }
+.burger{ display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:6px; }
+.burger span{ width:24px; height:1.5px; background:var(--plaster); display:block; transition:transform .3s, opacity .3s; }
+.mobile-menu{ position:fixed; inset:0; z-index:190; background:rgba(12,11,10,.97); backdrop-filter:blur(6px);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2rem;
+  opacity:0; visibility:hidden; transition:opacity .4s, visibility .4s; }
+.mobile-menu.open{ opacity:1; visibility:visible; }
+.mobile-menu a{ font-family:var(--display); font-size:1.8rem; letter-spacing:.08em; text-transform:uppercase; color:var(--plaster); cursor:pointer; }
+.mobile-menu a:hover{ color:var(--rebate); }
+.mobile-menu .mm-book{ font-family:var(--mono); font-size:.7rem; letter-spacing:.2em; border:1px solid var(--rebate); color:var(--rebate); padding:.7rem 1.6rem; border-radius:2rem; }
+@media (max-width:820px){ .site-links, .book{ display:none; } .burger{ display:flex; } }
+
+/* carousel */
+.carousel{ position:relative; z-index:10; flex:1; display:flex; align-items:center; justify-content:center;
+  perspective:1900px; touch-action:pan-y; }
+.track{ position:relative; width:100%; height:min(88vh,880px); transform-style:preserve-3d; }
+.card{ --w:min(80vw, 44vh, 520px);
+  position:absolute; top:50%; left:50%; width:var(--w); height:calc(var(--w)*1.46);
+  margin-left:calc(var(--w)/-2); margin-top:calc(var(--w)*1.46/-2);
+  border-radius:4px; overflow:hidden; background:#000; box-shadow:0 24px 50px rgba(0,0,0,.5);
+  cursor:pointer; will-change:transform,opacity; outline:none;
+  transition:transform .8s cubic-bezier(.22,.61,.36,1), opacity .8s ease; }
+.card img, .card video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.card video{ opacity:0; transition:opacity .6s ease; }
+.card.is-active.playing video{ opacity:1; }
+.card.is-active{ box-shadow:0 40px 90px rgba(0,0,0,.7); }
+.card .darken{ position:absolute; inset:0; background:rgba(12,11,10,.28); opacity:0; transition:opacity .6s ease; }
+.card.is-active .darken{ opacity:1; }  /* slight darken under the title overlay */
+
+/* centered overlay: region · COUNTRY · subtitle · explore */
+.overlay{ position:absolute; inset:0; z-index:25; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; pointer-events:none; padding:0 1rem; }
+.overlay .inner{ opacity:0; transform:translateY(12px); transition:opacity .7s ease, transform .7s ease; width:100%; }
+.overlay.in .inner{ opacity:1; transform:none; }
+/* big country title that expands across the clip — spaced out, understated */
+.country{ font-family:var(--display); font-weight:400; text-transform:uppercase;
+  letter-spacing:.14em; line-height:1; font-size:clamp(2.2rem,6.4vw,4.6rem);
+  text-shadow:0 4px 44px rgba(0,0,0,.6); white-space:nowrap; }
+.rule{ width:52px; height:1px; background:var(--rebate); margin:1.1rem auto; opacity:.9; }
+.subtitle{ font-family:var(--body); font-style:italic; font-size:clamp(1rem,1.7vw,1.35rem);
+  letter-spacing:.02em; color:var(--plaster); text-shadow:0 2px 24px rgba(0,0,0,.65); }
+/* explore button sits BELOW the clip, not over it */
+.explore-wrap{ position:relative; z-index:20; flex-shrink:0; text-align:center; margin-top:-7vh; padding:.4rem 1rem .8rem; }
+.explore{ display:inline-block; cursor:pointer;
+  font-family:var(--mono); font-weight:700; font-size:.72rem; letter-spacing:.2em; text-transform:uppercase; color:#141210;
+  background:#F4F1EA; border:1px solid #F4F1EA; padding:1rem 2.6rem; border-radius:4px;
+  box-shadow:0 8px 30px rgba(0,0,0,.4); transition:background .3s ease, color .3s ease, transform .2s ease; }
+.explore:hover{ background:var(--rebate); border-color:var(--rebate); color:#141210; transform:translateY(-1px); }
+
+/* arrows */
+.arrow{ position:absolute; top:50%; transform:translateY(-50%); z-index:40; width:62px; height:62px;
+  display:flex; align-items:center; justify-content:center; color:var(--plaster);
+  background:rgba(20,18,16,.42); border:1.5px solid rgba(233,228,218,.5); backdrop-filter:blur(5px);
+  font-size:2rem; cursor:pointer; opacity:.95; border-radius:50%; box-shadow:0 6px 24px rgba(0,0,0,.45);
+  transition:background .3s ease, border-color .3s ease, color .3s ease, transform .2s ease; }
+.arrow:hover{ background:var(--rebate); border-color:var(--rebate); color:#141210; transform:translateY(-50%) scale(1.06); }
+.arrow.prev{ left:clamp(.4rem,3vw,2rem); }
+.arrow.next{ right:clamp(.4rem,3vw,2rem); }
+
+/* right-side vertical dot nav */
+.dots{ position:absolute; right:clamp(.9rem,2.5vw,2rem); top:50%; transform:translateY(-50%);
+  z-index:40; display:flex; flex-direction:column; gap:.7rem; }
+.dot{ width:7px; height:7px; border-radius:50%; background:rgba(233,228,218,.28); cursor:pointer;
+  transition:background .3s, transform .3s; }
+.dot.on{ background:var(--rebate); transform:scale(1.4); }
+@media (max-width:760px){ .dots{ right:.6rem; } }
+
+.hint{ position:relative; z-index:20; flex-shrink:0; text-align:center; padding:0 1rem 2.6rem;
+  font-family:var(--mono); font-weight:700; font-size:.66rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--plaster); text-shadow:0 1px 10px rgba(0,0,0,.7); }
+
+/* explore panel (demonstrates the click-through) */
+.panel{ position:fixed; inset:0; z-index:90; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:2rem; background:rgba(12,11,10,.9); backdrop-filter:blur(8px);
+  opacity:0; visibility:hidden; transition:opacity .6s ease, visibility .6s; }
+.panel.open{ opacity:1; visibility:visible; }
+.panel .p-region{ font-family:var(--mono); font-size:.6rem; letter-spacing:.28em; text-transform:uppercase; color:var(--rebate); margin-bottom:1rem; }
+.panel h2{ font-family:var(--display); font-weight:400; font-size:clamp(2.6rem,8vw,5.5rem); line-height:1; margin-bottom:1rem; }
+.panel .p-sub{ font-style:italic; color:var(--plaster-dim); font-size:1.2rem; margin-bottom:1.6rem; }
+.panel .p-itin{ max-width:34em; color:var(--plaster); line-height:1.6; margin-bottom:.6rem; }
+.panel .p-route{ font-family:var(--mono); font-size:.62rem; letter-spacing:.14em; color:var(--plaster-dim); text-transform:uppercase; margin-bottom:2.2rem; }
+.panel .p-back{ cursor:pointer; font-family:var(--mono); font-size:.62rem; letter-spacing:.22em; text-transform:uppercase;
+  border:1px solid var(--hairline); color:var(--plaster); padding:.8rem 1.6rem; border-radius:2rem; }
+.panel .p-back:hover{ border-color:var(--rebate); color:var(--rebate); }
+
+/* ============ INDIA EXPERIENCE PAGE ============ */
+.page{ position:fixed; inset:0; z-index:95; background:var(--charcoal); color:var(--plaster);
+  overflow-y:auto; overflow-x:hidden; opacity:0; visibility:hidden; transform:translateY(20px);
+  transition:opacity .6s ease, transform .6s ease, visibility .6s; -webkit-overflow-scrolling:touch; }
+.page.open{ opacity:1; visibility:visible; transform:none; }
+.page-nav{ position:sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center;
+  padding:1.1rem clamp(1.25rem,5vw,3rem); mix-blend-mode:difference; }
+.page-nav .back{ font-family:var(--mono); font-size:.62rem; letter-spacing:.2em; text-transform:uppercase; cursor:pointer; }
+.page-nav .wm{ font-family:var(--display); font-size:1rem; letter-spacing:.3em; text-transform:uppercase; }
+
+.p-hero{ position:relative; height:100vh; min-height:520px; display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden; }
+.p-hero video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.p-hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(to bottom, rgba(18,17,16,.5), rgba(18,17,16,.25) 40%, rgba(18,17,16,.85)); }
+.p-hero .h-in{ position:relative; z-index:2; padding:1rem; }
+.p-hero .h-tag{ font-family:var(--mono); font-size:.62rem; letter-spacing:.28em; text-transform:uppercase; color:var(--plaster); opacity:.85; }
+.p-hero h1{ font-family:var(--display); font-weight:400; text-transform:uppercase; letter-spacing:.16em;
+  font-size:clamp(3rem,11vw,7rem); line-height:1; margin:.6rem 0; text-shadow:0 4px 40px rgba(0,0,0,.6); }
+.p-hero .h-sub{ font-style:italic; font-size:clamp(1.1rem,2.2vw,1.6rem); color:var(--plaster); }
+.scrollcue{ position:absolute; bottom:1.6rem; left:50%; transform:translateX(-50%); z-index:2;
+  font-family:var(--mono); font-size:.55rem; letter-spacing:.22em; text-transform:uppercase; color:var(--plaster-dim); }
+
+.p-section{ max-width:52em; margin:0 auto; padding:clamp(3.5rem,9vh,7rem) clamp(1.5rem,6vw,3rem) 0; }
+.p-kicker{ font-family:var(--mono); font-size:.62rem; letter-spacing:.24em; text-transform:uppercase; color:var(--rebate); display:block; margin-bottom:1rem; }
+.p-h2{ font-family:var(--display); font-weight:400; font-size:clamp(1.9rem,4.5vw,3rem); line-height:1.08; margin-bottom:1.3rem; }
+.p-body{ font-size:clamp(1.08rem,1.4vw,1.22rem); line-height:1.7; color:#D8D2C7; max-width:34em; }
+.p-body + .p-body{ margin-top:1em; }
+.p-intro-portrait{ float:right; width:min(38%,240px); margin:.4rem 0 1.2rem 1.8rem; border-radius:3px; }
+@media (max-width:640px){ .p-intro-portrait{ float:none; width:70%; display:block; margin:1.2rem auto; } }
+
+.p-figs{ display:grid; gap:clamp(.8rem,2vw,1.4rem); margin:clamp(2rem,5vh,3.5rem) 0 0; }
+.p-figs.two{ grid-template-columns:1fr 1fr; }
+.p-figs img{ width:100%; height:100%; object-fit:cover; border-radius:3px; display:block; }
+.p-fig-wide img{ width:100%; border-radius:3px; display:block; margin-top:clamp(2rem,5vh,3.5rem); }
+@media (max-width:640px){ .p-figs.two{ grid-template-columns:1fr; } }
+
+/* film gallery — masonry via CSS columns */
+.p-film{ padding:clamp(4rem,10vh,7rem) clamp(1.25rem,5vw,3rem); border-top:1px solid var(--hairline); margin-top:clamp(3.5rem,8vh,6rem); }
+.p-film .head{ text-align:center; margin-bottom:clamp(2rem,5vh,3.5rem); }
+.gallery{ column-count:3; column-gap:1rem; max-width:1100px; margin:0 auto; }
+.gallery figure{ break-inside:avoid; margin:0 0 1rem; }
+.gallery img{ width:100%; border-radius:2px; display:block; }
+.gallery figcaption{ font-family:var(--mono); font-size:.56rem; letter-spacing:.16em; text-transform:uppercase; color:var(--rebate); margin-top:.5rem; }
+@media (max-width:900px){ .gallery{ column-count:2; } }
+@media (max-width:560px){ .gallery{ column-count:1; } }
+
+/* motion */
+.p-motion{ padding:clamp(3.5rem,9vh,6rem) clamp(1.25rem,5vw,3rem); border-top:1px solid var(--hairline); }
+.p-motion .head{ text-align:center; margin-bottom:clamp(2rem,5vh,3rem); }
+.motion-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; max-width:900px; margin:0 auto; }
+.motion-grid video{ width:100%; aspect-ratio:9/16; object-fit:cover; border-radius:3px; background:#000; }
+@media (max-width:560px){ .motion-grid{ grid-template-columns:1fr; } }
+
+/* itinerary */
+.p-itin2{ text-align:center; padding:clamp(4rem,10vh,7rem) 1.5rem; border-top:1px solid var(--hairline); }
+.p-itin2 .p-h2{ margin-bottom:.5rem; }
+.p-itin2 .route{ font-family:var(--mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:var(--plaster-dim); margin-bottom:1.4rem; }
+.p-itin2 .line{ max-width:32em; margin:0 auto 2rem; color:#D8D2C7; }
+.cta{ display:inline-block; cursor:pointer; font-family:var(--mono); font-size:.66rem; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--charcoal-deep); background:var(--rebate); border:1px solid var(--rebate); padding:.9rem 2rem; border-radius:2rem; }
+.cta:hover{ background:transparent; color:var(--rebate); }
+.p-foot{ text-align:center; padding:3rem 1.5rem 4rem; border-top:1px solid var(--hairline); }
+.p-foot .back2{ cursor:pointer; font-family:var(--mono); font-size:.62rem; letter-spacing:.2em; text-transform:uppercase; color:var(--plaster-dim); }
+.p-foot .back2:hover{ color:var(--rebate); }
+
+/* ============ SECTION VIEWS (Photography / Films / Itineraries / About) ============ */
+.view-head{ text-align:center; max-width:44em; margin:0 auto; padding:clamp(6rem,16vh,9rem) clamp(1.5rem,6vw,3rem) clamp(2.5rem,6vh,4rem); }
+.view-head .p-kicker{ display:block; margin-bottom:1rem; }
+.view-head h1{ font-family:var(--display); font-weight:400; text-transform:uppercase; letter-spacing:.1em; font-size:clamp(2.4rem,6vw,4.4rem); line-height:1; }
+.view-head p{ margin-top:1.3rem; color:#D8D2C7; font-size:clamp(1.05rem,1.4vw,1.2rem); line-height:1.7; }
+
+/* Kerala coastline triptych — three frames that line up into one endless coast */
+.triptych{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:3px; max-width:1500px; margin:0 auto; padding:0 clamp(1.25rem,5vw,3rem); }
+.triptych img{ width:100%; height:clamp(150px,26vw,380px); object-fit:cover; display:block; }
+.triptych-note{ text-align:center; font-family:var(--mono); font-size:.58rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--plaster-dim); margin:1rem 0 clamp(2rem,5vh,3.5rem); }
+
+/* region grouping header for galleries */
+.region-head{ max-width:1180px; margin:0 auto; padding:clamp(2rem,5vh,3rem) clamp(1.25rem,5vw,3rem) 1rem;
+  display:flex; align-items:baseline; gap:.9rem; border-top:1px solid var(--hairline); }
+.region-head:first-of-type{ border-top:none; }
+.region-head h2{ font-family:var(--display); font-weight:400; font-size:clamp(1.5rem,3.4vw,2.5rem); letter-spacing:.03em; }
+.region-head .count{ font-family:var(--mono); font-size:.58rem; letter-spacing:.2em; text-transform:uppercase; color:var(--plaster-dim); }
+
+/* Photography — masonry with hover caption (location + film stock) */
+.photo-grid{ column-count:3; column-gap:1rem; max-width:1180px; margin:0 auto; padding:0 clamp(1.25rem,5vw,3rem) clamp(2.5rem,6vh,4rem); }
+.photo-grid:last-child{ padding-bottom:clamp(4rem,10vh,7rem); }
+.photo-grid figure{ break-inside:avoid; margin:0 0 1rem; position:relative; overflow:hidden; border-radius:2px; }
+.photo-grid img{ width:100%; display:block; }
+.photo-grid .cap{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:1rem;
+  background:linear-gradient(to top, rgba(12,11,10,.82), rgba(12,11,10,0) 55%); opacity:0; transition:opacity .4s ease; }
+.photo-grid figure:hover .cap{ opacity:1; }
+.photo-grid .cap .loc{ font-family:var(--display); font-size:1.15rem; letter-spacing:.02em; }
+.photo-grid .cap .stock{ font-family:var(--mono); font-size:.56rem; letter-spacing:.18em; text-transform:uppercase; color:var(--rebate); margin-top:.3rem; }
+@media (max-width:900px){ .photo-grid{ column-count:2; } }
+@media (max-width:560px){ .photo-grid{ column-count:1; } }
+@media (hover:none){ .photo-grid .cap{ opacity:1; background:linear-gradient(to top, rgba(12,11,10,.8), rgba(12,11,10,0) 40%); } }
+
+/* Films — grid of clips that play on hover / in view */
+.films-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; max-width:1180px; margin:0 auto; padding:0 clamp(1.25rem,5vw,3rem) clamp(4rem,10vh,7rem); }
+.film-tile{ position:relative; aspect-ratio:9/16; border-radius:3px; overflow:hidden; background:#000; cursor:pointer; }
+.film-tile img, .film-tile video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.film-tile video{ opacity:0; transition:opacity .5s ease; }
+.film-tile.playing video{ opacity:1; }
+.film-tile .loc{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:.9rem;
+  font-family:var(--mono); font-size:.58rem; letter-spacing:.16em; text-transform:uppercase; color:var(--plaster);
+  background:linear-gradient(to top, rgba(12,11,10,.75), rgba(12,11,10,0)); opacity:0; transition:opacity .4s ease; }
+.film-tile:hover .loc, .film-tile.playing .loc{ opacity:1; }
+@media (max-width:820px){ .films-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:520px){ .films-grid{ grid-template-columns:1fr; } }
+
+/* Itineraries */
+.itin-cards{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(1.5rem,4vw,2.5rem); max-width:1000px; margin:0 auto; padding:0 clamp(1.25rem,5vw,3rem) clamp(4rem,10vh,7rem); }
+.itin-card{ border:1px solid var(--hairline); border-radius:4px; overflow:hidden; background:#1B1A18; display:flex; flex-direction:column; }
+.itin-card .cover{ aspect-ratio:3/2; overflow:hidden; }
+.itin-card .cover img{ width:100%; height:100%; object-fit:cover; }
+.itin-card .body{ padding:1.6rem 1.6rem 1.8rem; flex:1; display:flex; flex-direction:column; }
+.itin-card .p-kicker{ display:block; margin-bottom:.7rem; }
+.itin-card h3{ font-family:var(--display); font-weight:400; font-size:1.7rem; line-height:1.1; margin-bottom:.5rem; }
+.itin-card .route{ font-family:var(--mono); font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; color:var(--plaster-dim); margin-bottom:1rem; }
+.itin-card p{ color:#D8D2C7; line-height:1.6; font-size:1rem; margin-bottom:1.4rem; }
+.itin-card .cta{ align-self:flex-start; margin-top:auto; }
+.itin-soon{ grid-column:1/-1; text-align:center; color:var(--plaster-dim); font-style:italic; padding-top:1rem; }
+@media (max-width:720px){ .itin-cards{ grid-template-columns:1fr; } }
+
+/* About */
+.about-wrap{ max-width:40em; margin:0 auto; padding:0 clamp(1.5rem,6vw,3rem) clamp(5rem,12vh,8rem); text-align:center; }
+.about-wrap img{ width:min(58%,260px); border-radius:3px; margin-bottom:2rem; }
+.about-wrap p{ color:#D8D2C7; font-size:clamp(1.1rem,1.5vw,1.28rem); line-height:1.75; }
+.about-wrap p + p{ margin-top:1.1em; }
+.about-note{ margin-top:2rem; font-family:var(--mono); font-size:.58rem; letter-spacing:.18em; text-transform:uppercase; color:var(--rebate); }
+
+/* Contact */
+.contact-wrap{ max-width:34em; margin:0 auto; padding:0 clamp(1.5rem,6vw,3rem) clamp(5rem,12vh,8rem); }
+.contact-form{ display:flex; flex-direction:column; gap:1.1rem; }
+.contact-form label{ font-family:var(--mono); font-size:.58rem; letter-spacing:.18em; text-transform:uppercase; color:var(--plaster-dim); margin-bottom:.4rem; display:block; }
+.contact-form input, .contact-form textarea{ width:100%; background:#1B1A18; border:1px solid var(--hairline); border-radius:3px;
+  color:var(--plaster); font-family:var(--body); font-size:1.05rem; padding:.85rem 1rem; outline:none; transition:border-color .3s; }
+.contact-form input:focus, .contact-form textarea:focus{ border-color:var(--rebate); }
+.contact-form textarea{ min-height:130px; resize:vertical; }
+.contact-form button{ align-self:flex-start; margin-top:.5rem; cursor:pointer;
+  font-family:var(--mono); font-weight:700; font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:#141210;
+  background:#F4F1EA; border:1px solid #F4F1EA; padding:1rem 2.4rem; border-radius:4px; transition:background .3s, color .3s; }
+.contact-form button:hover{ background:var(--rebate); border-color:var(--rebate); }
+.contact-email{ text-align:center; margin-top:2.2rem; color:var(--plaster-dim); }
+.contact-email a{ color:var(--rebate); border-bottom:1px solid rgba(201,143,63,.4); }
+.form-success{ display:none; text-align:center; color:var(--rebate); font-style:italic; margin-top:1rem; }
+
+@media (prefers-reduced-motion:reduce){ .card,.bg-layer,.overlay .inner,.panel,.page{ transition:none !important; } }
+</style>
+</head>
+<body>
+<header class="site-nav" id="siteNav">
+  <a class="wordmark" data-view="home">Amélie</a>
+  <nav class="site-links">
+    <a data-view="home">Travel With Me</a>
+    <a data-view="photography">Photography</a>
+    <a data-view="films">Motion</a>
+    <a data-view="itineraries">Itineraries</a>
+    <a data-view="about">About</a>
+  </nav>
+  <a class="book" data-view="contact">Contact me</a>
+  <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+</header>
+<div class="mobile-menu" id="mobileMenu">
+  <a data-view="home">Travel With Me</a>
+  <a data-view="photography">Photography</a>
+  <a data-view="films">Motion</a>
+  <a data-view="itineraries">Itineraries</a>
+  <a data-view="about">About</a>
+  <a class="mm-book" data-view="contact">Contact me</a>
+</div>
+<div class="stage">
+  <div class="bg"><div class="bg-layer" id="bgA"></div><div class="bg-layer" id="bgB"></div></div>
+
+  <div class="carousel" id="carousel">
+    <button class="arrow prev" id="prev" aria-label="Previous">&#8249;</button>
+    <div class="track" id="track"></div>
+    <button class="arrow next" id="next" aria-label="Next">&#8250;</button>
+    <div class="overlay" id="overlay">
+      <div class="inner">
+        <h1 class="country" id="ov-country"></h1>
+        <div class="rule"></div>
+        <p class="subtitle" id="ov-sub"></p>
+      </div>
+    </div>
+    <div class="dots" id="dots"></div>
+  </div>
+
+  <div class="explore-wrap"><span class="explore" id="ov-explore"></span></div>
+  <div class="hint">Drag, swipe or use &larr; &rarr; to travel &nbsp;·&nbsp; tap a frame</div>
+</div>
+
+<div class="panel" id="panel">
+  <span class="p-region" id="pn-region"></span>
+  <h2 id="pn-country"></h2>
+  <p class="p-sub" id="pn-sub"></p>
+  <p class="p-itin" id="pn-itin"></p>
+  <p class="p-route" id="pn-route"></p>
+  <span class="p-back" id="pn-back">&larr; Back to the map</span>
+</div>
+
+<!-- ============ INDIA EXPERIENCE PAGE ============ -->
+<div class="page" id="page-india">
+  <section class="p-hero">
+    <video muted loop playsinline preload="none" data-src="assets/cover/vid/india.mp4"></video>
+    <div class="h-in">
+      <span class="h-tag">Travel With Me · India</span>
+      <h1>India</h1>
+      <p class="h-sub">Color, Then Calm</p>
+    </div>
+    <span class="scrollcue">Scroll ↓</span>
+  </section>
+
+  <section class="p-section">
+    <span class="p-kicker">The Journey</span>
+    <h2 class="p-h2">North for the color, south to come home rejuvenated.</h2>
+    <img class="p-intro-portrait" src="assets/india/dig/amelie.jpg" alt="Amélie in a doorway in the Blue City">
+    <p class="p-body">I first traveled India the slow way. Five weeks of trains, drivers, and tuk-tuks, which taught me exactly where the country rewards patience and where it punishes it.</p>
+    <p class="p-body">This is the version I would send you on. It runs deliberately north to south, so Rajasthan's color builds to Varanasi's intensity, and then the south slows everything down and sets you on the shore of the Arabian Sea.</p>
+  </section>
+
+  <section class="p-section">
+    <span class="p-kicker">The North · Rajasthan</span>
+    <h2 class="p-h2">In the north, color isn't decorative. It's the weather.</h2>
+    <p class="p-body">The Blue City of Jodhpur stacks itself under the fort. A green door on an indigo wall, a dog asleep in the shade, men bent over a game in the lane. Rajasthan is craft and color and faces that have watched a hundred seasons pass, and it gives all of it to a camera freely.</p>
+    <div class="p-figs two">
+      <img src="assets/india/dig/jodhpur-city.jpg" alt="The Blue City beneath Mehrangarh Fort at golden hour">
+      <img src="assets/india/dig/jodhpur-dog.jpg" alt="A dog asleep before a green door on a blue wall">
+    </div>
+    <div class="p-fig-wide"><img src="assets/india/dig/jodhpur-street.jpg" alt="Men playing a game in a lane below a painted blue haveli"></div>
+  </section>
+
+  <section class="p-section">
+    <span class="p-kicker">Varanasi · The Ganges</span>
+    <h2 class="p-h2">Then the country turns sacred, and unflinching.</h2>
+    <p class="p-body">I got to the ghats before light. A woman waded in, lifted an offering to the river, and the rings widened around her while the whole city woke up facing the water. Varanasi does not ease you in. It hands you the Ganges and lets you make of it what you can.</p>
+    <div class="p-fig-wide"><img src="assets/india/dig/varanasi-prayer.jpg" alt="A woman offering water to the Ganges at dawn, ripples around her"></div>
+  </section>
+
+  <section class="p-section">
+    <span class="p-kicker">The South · Mysore &amp; Kerala</span>
+    <h2 class="p-h2">And then the south exhales.</h2>
+    <p class="p-body">Mysore mornings come in gold, long shadows and a woman walking home beside her cow. By the time I reached the Kerala coast the palms were leaning and the sea had gone soft and grey. India that started as an assault on the senses ended as one long, slow breath.</p>
+    <div class="p-fig-wide"><img src="assets/india/film/beach.jpg" alt="A figure walking a misty beach lined with palms on the Kerala coast"></div>
+  </section>
+
+  <section class="p-film">
+    <div class="head">
+      <span class="p-kicker">On Film · India</span>
+      <h2 class="p-h2">Thirty-six exposures at a time.</h2>
+    </div>
+    <div class="gallery">
+      <figure><img src="assets/india/film/turbans.jpg" alt="Two elders in red turbans"><figcaption>Rajasthan · Two Elders</figcaption></figure>
+      <figure><img src="assets/india/film/oldcity.jpg" alt="The old city above the Ganges"><figcaption>Varanasi · The Old City</figcaption></figure>
+      <figure><img src="assets/india/film/cow.jpg" alt="A woman walking with a cow in golden light"><figcaption>Mysore · Golden Hour</figcaption></figure>
+      <figure><img src="assets/india/film/shepherd.jpg" alt="A shepherd in a red turban with his goats"><figcaption>Rajasthan · The Shepherd</figcaption></figure>
+      <figure><img src="assets/india/film/pavilion.jpg" alt="A woman seated in a white marble pavilion"><figcaption>Jodhpur · The Pavilion</figcaption></figure>
+      <figure><img src="assets/india/film/weaver.jpg" alt="A woman weaving baskets"><figcaption>The Basket Weaver</figcaption></figure>
+      <figure><img src="assets/india/film/sadhu.jpg" alt="A sadhu asleep on the ghat steps"><figcaption>Varanasi · The Ghats</figcaption></figure>
+      <figure><img src="assets/india/film/newspaper.jpg" alt="A man with a newspaper outside Madan Mohan Villas"><figcaption>Madan Mohan Villas</figcaption></figure>
+      <figure><img src="assets/india/film/girl.jpg" alt="A girl playing on the sand with a yellow ball"><figcaption>Kerala · On the Sand</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="p-motion">
+    <div class="head">
+      <span class="p-kicker">In Motion</span>
+      <h2 class="p-h2">The river, moving.</h2>
+    </div>
+    <div class="motion-grid">
+      <video muted loop playsinline preload="none" data-src="assets/india/vid/varanasi-dawn.mp4"></video>
+      <video muted loop playsinline preload="none" data-src="assets/india/vid/varanasi-street.mp4"></video>
+    </div>
+  </section>
+
+  <section class="p-itin2">
+    <span class="p-kicker">The Itinerary</span>
+    <h2 class="p-h2">Color, Then Calm</h2>
+    <p class="route">Delhi → Rajasthan → Varanasi → Mysore &amp; the Kerala Coast · Three Weeks</p>
+    <p class="line">The full three-week passage I designed and photographed, north to south. Heritage havelis, sacred rivers, and the Arabian Sea to finish.</p>
+    <a class="cta" data-view="contact">Enquire about this itinerary</a>
+  </section>
+
+  <div class="p-foot">
+    <span class="back2" data-close>&larr; Back to the map</span>
+  </div>
+</div>
+
+<!-- ============ BALKANS EXPERIENCE PAGE ============ -->
+<div class="page" id="page-balkans">
+  <section class="p-hero">
+    <video muted loop playsinline preload="none" data-src="assets/cover/vid/croatia.mp4"></video>
+    <div class="h-in">
+      <span class="h-tag">Travel With Me · The Balkans</span>
+      <h1>The Balkans</h1>
+      <p class="h-sub">The Adriatic Gradient</p>
+    </div>
+    <span class="scrollcue">Scroll ↓</span>
+  </section>
+
+  <section class="p-section">
+    <span class="p-kicker">The Journey</span>
+    <h2 class="p-h2">The Adriatic everyone knows ends at Dubrovnik. I kept going south.</h2>
+    <p class="p-body">I first made this trip the slow way, on buses and through border queues, with a window seat for every mile. It showed me exactly where the magic lives and where the friction hides.</p>
+    <p class="p-body">So the route runs deliberately north to south, from the Dalmatian coast down into Montenegro's bay and on into the Albanian Alps, so the wildness builds instead of fading. Every day ends somewhere the crowds are not.</p>
+  </section>
+
+  <section class="p-section">
+    <span class="p-kicker">Croatia · Dubrovnik &amp; Korčula</span>
+    <h2 class="p-h2">Stone first, and timing is everything.</h2>
+    <p class="p-body">I walked Dubrovnik at dawn, when the only sound was laundry moving between the stone houses, and again at midday after the cruise ships landed. You would swear they were two different cities. Then south by boat to Korčula, where the water off the Škoji islets is so clear you forget it is holding you up.</p>
+    <div class="p-figs two">
+      <img src="assets/balkans/croatia-alley.jpg" alt="A narrow Dubrovnik stone alley with laundry strung between houses">
+      <img src="assets/balkans/croatia-water.jpg" alt="Clear turquoise water against a limestone cliff near Korčula">
+    </div>
+  </section>
+
+  <section class="p-section">
+    <span class="p-kicker">Montenegro · The Bay of Kotor</span>
+    <h2 class="p-h2">Kotor won me over in a single evening.</h2>
+    <p class="p-body">The road drops into the Boka, where black mountains fall straight into still water. Kotor's old town is best after the day boats leave, all lantern-lit lanes, cats on warm stone, and the mountain wall glowing above the ramparts. I remember wishing I had based there all along, so this route does.</p>
+    <div class="p-fig-wide"><img src="assets/balkans/montenegro-moonrise.jpg" alt="Moonrise over the still water of the Bay of Kotor"></div>
+  </section>
+
+  <section class="p-section">
+    <span class="p-kicker">Albania · The Accursed Mountains</span>
+    <h2 class="p-h2">And then the crescendo.</h2>
+    <p class="p-body">Komani Lake is one of the most beautiful boat rides in Europe and almost nobody knows it exists, a reservoir narrowing into a canyon with walls a thousand feet high. Then up into Theth, past a waterfall pouring off a mossy cliff, to the Blue Eye, a spring-fed pool so blue that photos of it look edited. Mine are not.</p>
+    <div class="p-figs two">
+      <img src="assets/balkans/albania-komani.jpg" alt="Komani Lake canyon with thousand-foot walls">
+      <img src="assets/balkans/albania-blueeye.jpg" alt="The impossibly blue spring-fed pool of the Blue Eye">
+    </div>
+    <div class="p-fig-wide"><img src="assets/balkans/albania-waterfall.jpg" alt="A waterfall pouring off a mossy cliff into a turquoise pool in Theth"></div>
+  </section>
+
+  <section class="p-motion">
+    <div class="head">
+      <span class="p-kicker">In Motion</span>
+      <h2 class="p-h2">Coast, bay, and mountains.</h2>
+    </div>
+    <div class="motion-grid">
+      <video muted loop playsinline preload="none" data-src="assets/cover/vid/croatia.mp4"></video>
+      <video muted loop playsinline preload="none" data-src="assets/cover/vid/montenegro.mp4"></video>
+      <video muted loop playsinline preload="none" data-src="assets/cover/vid/albania.mp4"></video>
+    </div>
+  </section>
+
+  <section class="p-itin2">
+    <span class="p-kicker">The Itinerary</span>
+    <h2 class="p-h2">The Adriatic Gradient</h2>
+    <p class="route">Dubrovnik → Korčula → Bay of Kotor → Shkodër &amp; the Albanian Alps · Eight Days</p>
+    <p class="line">The eight-day passage I designed and photographed, from boutique coast to private waters to raw mountains, every border crossed the easy way.</p>
+    <a class="cta" data-view="contact">Enquire about this itinerary</a>
+  </section>
+
+  <div class="p-foot"><span class="back2" data-close>&larr; Back to the map</span></div>
+</div>
+
+<!-- ============ PHOTOGRAPHY ============ -->
+<div class="page" id="view-photography">
+  <div class="view-head">
+    <span class="p-kicker">Photography</span>
+    <h1>On Film</h1>
+    <p>Every frame here was made on film, slowly and on purpose, thirty-six exposures at a time. Hover any frame to see where it was made.</p>
+  </div>
+  <div class="triptych">
+    <img src="assets/india/film/coast-left.jpg" alt="A woman walking away down a misty palm-lined beach">
+    <img src="assets/india/film/coast-mid.jpg" alt="Fishermen in a boat on a still misty sea">
+    <img src="assets/india/film/coast-right.jpg" alt="A man walking toward the camera along the beach">
+  </div>
+  <div class="triptych-note">Kerala, India · one coastline, three frames</div>
+  <div class="region-head"><h2>India</h2><span class="count">Rajasthan · Varanasi · the South</span></div>
+  <div class="photo-grid">
+    <figure><img src="assets/india/film/turbans.jpg" alt="Two elders in red turbans"><div class="cap"><span class="loc">Rajasthan, India</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/india/film/oldcity.jpg" alt="The old city above the Ganges"><div class="cap"><span class="loc">Varanasi, India</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/india/film/cow.jpg" alt="A woman walking with a cow in golden light"><div class="cap"><span class="loc">Mysore, India</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/india/film/sadhu.jpg" alt="A sadhu asleep on the ghat steps"><div class="cap"><span class="loc">Varanasi, India</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/india/film/shepherd.jpg" alt="A shepherd in a red turban with his goats"><div class="cap"><span class="loc">Rajasthan, India</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/india/film/pavilion.jpg" alt="A woman seated in a white marble pavilion"><div class="cap"><span class="loc">Jodhpur, India</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/india/film/newspaper.jpg" alt="A man with a newspaper outside Madan Mohan Villas"><div class="cap"><span class="loc">Jodhpur, India</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/india/film/girl.jpg" alt="A girl playing on the sand with a yellow ball"><div class="cap"><span class="loc">Kerala, India</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/india/film/weaver.jpg" alt="A woman weaving baskets"><div class="cap"><span class="loc">Rajasthan, India</span><span class="stock">Portra 400</span></div></figure>
+  </div>
+  <div class="region-head"><h2>Southeast Asia</h2><span class="count">Thailand · Vietnam · Cambodia · Laos</span></div>
+  <div class="photo-grid">
+    <figure><img src="assets/gallery/th-khaosok.jpg" alt="A longtail boat on an emerald lake below a karst peak"><div class="cap"><span class="loc">Khao Sok, Thailand</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/vn-lanterns.jpg" alt="A lantern-lit street reflected on wet stone"><div class="cap"><span class="loc">Hội An, Vietnam</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/la-farmer.jpg" alt="A farmer crossing a rice field below karst mountains"><div class="cap"><span class="loc">Vang Vieng, Laos</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/th-krabi.jpg" alt="A karst rock silhouette in a misty sea"><div class="cap"><span class="loc">Krabi, Thailand</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/vn-sapa.jpg" alt="Three Hmong women on a path in the rice terraces"><div class="cap"><span class="loc">Sa Pa, Vietnam</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/kh-boat.jpg" alt="A boy looking out from a boat over the water"><div class="cap"><span class="loc">Siem Reap, Cambodia</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/la-cow.jpg" alt="A cow in a rice field below karst mountains"><div class="cap"><span class="loc">Vang Vieng, Laos</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/vn-hagiang.jpg" alt="Three children on a swing above green mountains"><div class="cap"><span class="loc">Hà Giang, Vietnam</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/th-door.jpg" alt="An arched doorway opening onto a balcony over water"><div class="cap"><span class="loc">Southern Thailand</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/th-elephants.jpg" alt="Two elephants grazing at a sanctuary"><div class="cap"><span class="loc">Chiang Mai, Thailand</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/kh-angkor.jpg" alt="A naga statue and a baby monkey at Angkor"><div class="cap"><span class="loc">Angkor, Cambodia</span><span class="stock">Portra 400</span></div></figure>
+    <figure><img src="assets/gallery/la-shelter.jpg" alt="A tin-roofed shelter below karst mountains"><div class="cap"><span class="loc">Vang Vieng, Laos</span><span class="stock">Portra 400</span></div></figure>
+  </div>
+</div>
+
+<!-- ============ FILMS ============ -->
+<div class="page" id="view-films">
+  <div class="view-head">
+    <span class="p-kicker">Motion</span>
+    <h1>In Motion</h1>
+    <p>Short films from the road, grouped by region. Hover any frame and it comes to life.</p>
+  </div>
+  <div id="filmsGrid"></div>
+</div>
+
+<!-- ============ ITINERARIES ============ -->
+<div class="page" id="view-itineraries">
+  <div class="view-head">
+    <span class="p-kicker">Itineraries</span>
+    <h1>Field Notes</h1>
+    <p>Trips I designed and photographed myself, scouted the slow way and rebuilt for travelers who want the good version. Written to be used, not just admired.</p>
+  </div>
+  <div class="itin-cards">
+    <article class="itin-card">
+      <div class="cover"><img src="assets/india/dig/jodhpur-city.jpg" alt="The Blue City of Jodhpur"></div>
+      <div class="body">
+        <span class="p-kicker">India · Three Weeks</span>
+        <h3>Color, Then Calm</h3>
+        <p class="route">Delhi → Rajasthan → Varanasi → Kerala</p>
+        <p>Delhi to the Kerala coast, run north to south so Rajasthan's color builds to Varanasi's intensity before the south slows everything down.</p>
+        <a class="cta" data-view="contact">Enquire</a>
+      </div>
+    </article>
+    <article class="itin-card">
+      <div class="cover"><img src="assets/balkans/albania-komani.jpg" alt="Komani Lake in the Albanian Alps"></div>
+      <div class="body">
+        <span class="p-kicker">The Balkans · Eight Days</span>
+        <h3>The Adriatic Gradient</h3>
+        <p class="route">Dubrovnik → Kotor → the Albanian Alps</p>
+        <p>The Adriatic past the point most people stop, from the Dalmatian coast into Montenegro's bay and up into the Accursed Mountains.</p>
+        <a class="cta" data-view="contact">Enquire</a>
+      </div>
+    </article>
+    <p class="itin-soon">A Southeast Asia itinerary is in the works.</p>
+  </div>
+</div>
+
+<!-- ============ ABOUT ============ -->
+<div class="page" id="view-about">
+  <div class="view-head">
+    <span class="p-kicker">About</span>
+    <h1>Amélie</h1>
+  </div>
+  <div class="about-wrap">
+    <img src="assets/india/dig/amelie.jpg" alt="Amélie">
+    <p>I'm Amélie, a photographer, visual storyteller, and creative with a background in travel, hospitality, and marketing. I'm drawn to the details that give a place, company, or experience its character, and I find ways to bring those details to life.</p>
+    <p>I studied Communications and Entrepreneurship at Cal Poly, graduating in three years, and spent my time there building a foundation in marketing and storytelling. Since then, I've built social pages of my own, created content for brands, and worked freelance to help businesses tell their stories in a way that feels genuine rather than overly polished.</p>
+    <p>Photography taught me to wait for the moment when a feeling shows itself, and then to press the shutter once. Video taught me something close but different: how to hold onto that same stillness even when things are moving. I'm especially interested in that space between the two, images that feel quiet and lasting, while still capturing the energy of actually being there.</p>
+    <p>I shoot mostly on 35mm because film makes me slow down. Thirty-six frames, no screen to check, so every shot is intentional. It is the closest I have found to actually being somewhere instead of simply documenting it.</p>
+    <p>So far, that has meant nineteen countries and counting, from the ghats of Varanasi to the Accursed Mountains of Albania. Traveling has changed the way I see the world, not only by exposing me to places I never could have imagined, but to the people, cultures, and realities that exist within them. It has made me more aware of how differently people experience the world, and has given me a desire to use my work to bring attention to those realities rather than simply pass through them. I design the journeys too, scouting them the slow way first, then rebuilding them into itineraries I can hand to someone else.</p>
+    <p>Whether you're looking for someone to bring a fresh creative eye to your brand, capture the beauty of a place or experience, or thoughtfully build a journey from the ground up, I'd love to work together.</p>
+  </div>
+</div>
+
+<!-- ============ CONTACT ============ -->
+<div class="page" id="view-contact">
+  <div class="view-head">
+    <span class="p-kicker">Contact</span>
+    <h1>Contact Me</h1>
+    <p>For commissions, licensing, and collaborations with agencies and tourism boards. And if you would like the full day-by-day version of an itinerary, where to go, what to do, and where to stay, this is the place to ask.</p>
+  </div>
+  <div class="contact-wrap">
+    <form class="contact-form" name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="contact">
+      <p hidden><label>Leave blank: <input name="bot-field"></label></p>
+      <div><label for="cf-name">Your name</label><input id="cf-name" type="text" name="name" required></div>
+      <div><label for="cf-email">Your email</label><input id="cf-email" type="email" name="email" required></div>
+      <div><label for="cf-msg">Message</label><textarea id="cf-msg" name="message" placeholder="Tell me about your project, or ask about an itinerary…" required></textarea></div>
+      <button type="submit">Send</button>
+      <p class="form-success" id="formSuccess">Thank you. Your message is on its way.</p>
+    </form>
+    <p class="contact-email">Or email me directly at <a href="mailto:gentryamelie@gmail.com">gentryamelie@gmail.com</a></p>
+  </div>
+</div>
+
+<script>
+const A = "assets/cover/";
+// resolves to an inlined data-URI when packed into a standalone file, else the relative path
+function asset(p){ return (window.__ASSETS__ && window.__ASSETS__[p]) || p; }
+// order = the 12-country order requested; start centered on Italy (index 8)
+const CARDS = [
+  { slug:"albania",     country:"Albania",     region:"The Balkans",    sub:"Theth's hidden falls",        itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
+  { slug:"montenegro",  country:"Montenegro",  region:"The Balkans",    sub:"Still morning on the bay",     itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
+  { slug:"croatia",     country:"Croatia",     region:"The Balkans",    sub:"Sunset off the Dalmatian coast",itin:"The Adriatic Gradient — Croatia, Montenegro & the Albanian Alps.", route:"Dubrovnik → Kotor → the Albanian Alps · 8 days" },
+  { slug:"india",       country:"India",       region:"India",          sub:"Dawn on the Ganges",          itin:"Color, Then Calm — a three-week passage from Delhi to the Kerala coast.", route:"Delhi → Rajasthan → Varanasi → Kerala · 3 weeks" },
+  { slug:"thailand",    country:"Thailand",    region:"Southeast Asia", sub:"Floating on Khao Sok",        itin:"", route:"" },
+  { slug:"vietnam",     country:"Vietnam",     region:"Southeast Asia", sub:"Through the Ninh Bình karsts",itin:"", route:"" },
+  { slug:"cambodia",    country:"Cambodia",    region:"Southeast Asia", sub:"The floating villages",       itin:"", route:"" },
+  { slug:"france",      country:"France",      region:"Alpine Europe",  sub:"The canals of Annecy",        itin:"", route:"" },
+  { slug:"italy",       country:"Italy",       region:"Alpine Europe",  sub:"Above the Dolomites",         itin:"", route:"" },
+  { slug:"switzerland", country:"Switzerland", region:"Alpine Europe",  sub:"Over Gimmelwald",             itin:"", route:"" },
+  { slug:"indonesia",   country:"Indonesia",   region:"Indonesia",      sub:"Kelingking, Nusa Penida",     itin:"", route:"" },
+  { slug:"laos",        country:"Laos",        region:"Southeast Asia", sub:"Kuang Si Falls",              itin:"", route:"" },
+];
+const START = 8; // Italy
+
+const track = document.getElementById('track');
+const dotsEl = document.getElementById('dots');
+const overlay = document.getElementById('overlay');
+const bgA = document.getElementById('bgA'), bgB = document.getElementById('bgB');
+let active = START, bgToggle = true;
+
+const els = CARDS.map((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.tabIndex = 0;
+  const imgSrc = asset(`${A}img/${c.slug}.jpg`);
+  card.innerHTML = `
+    <img src="${imgSrc}" alt="${c.country}">
+    <video muted loop playsinline preload="none" poster="${imgSrc}"></video>
+    <div class="darken"></div>`;
+  card.addEventListener('click', () => go(i));
+  card.addEventListener('keydown', e => { if (e.key === 'Enter') go(i); });
+  track.appendChild(card);
+  return card;
+});
+const dots = CARDS.map((_, i) => {
+  const d = document.createElement('div'); d.className = 'dot';
+  d.addEventListener('click', () => go(i)); dotsEl.appendChild(d); return d;
+});
+
+function layout(){
+  els.forEach((card, i) => {
+    const off = i - active, abs = Math.abs(off), sign = Math.sign(off);
+    let tx, rot, sc, op, z;
+    if (off === 0){ tx=0; rot=0; sc=1.08; op=1; z=50; }
+    else {
+      const w = card.offsetWidth || 200;
+      tx = sign * (w * 0.62 + (abs - 1) * w * 0.52);
+      rot = -sign * 42;
+      sc = Math.max(0.5, 0.8 - (abs - 1) * 0.13);
+      op = abs > 3 ? 0 : Math.max(0.16, 0.82 - (abs - 1) * 0.26);
+      z = 40 - abs;
+    }
+    card.style.transform = `translateX(${tx}px) rotateY(${rot}deg) scale(${sc})`;
+    card.style.opacity = op;
+    card.style.zIndex = z;
+    card.style.pointerEvents = op === 0 ? 'none' : 'auto';
+    card.classList.toggle('is-active', off === 0);
+  });
+  dots.forEach((d, i) => d.classList.toggle('on', i === active));
+  updateOverlay();
+  setBackground(CARDS[active].slug);
+  handleVideo();
+}
+function updateOverlay(){
+  const c = CARDS[active];
+  overlay.classList.remove('in');
+  document.getElementById('ov-country').textContent = c.country;
+  document.getElementById('ov-sub').textContent = c.sub;
+  document.getElementById('ov-explore').textContent =
+    ['albania','montenegro','croatia'].includes(c.slug) ? 'Explore the Balkans' : 'Explore ' + c.country;
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('in')));
+}
+function setBackground(slug){
+  const src = asset(`${A}img/${slug}.jpg`);
+  const inc = bgToggle ? bgA : bgB, out = bgToggle ? bgB : bgA;
+  inc.style.backgroundImage = `url("${src}")`; inc.classList.add('show'); out.classList.remove('show');
+  bgToggle = !bgToggle;
+}
+// Clips are embedded as data: URIs. iOS won't play those directly, and the
+// sandbox blocks fetch(), so decode base64 to a Blob in-memory (no network).
+// If the blob URL fails to load, fall back to the data URI itself.
+const blobCache = {};
+function toObjectUrl(dataUri){
+  const mime = dataUri.slice(5, dataUri.indexOf(';'));
+  const bin = atob(dataUri.slice(dataUri.indexOf(',') + 1));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+}
+function srcFor(path){
+  if (blobCache[path]) return blobCache[path];
+  const data = asset(path);
+  let s = data;
+  if (data && data.indexOf('data:') === 0) { try { s = toObjectUrl(data); } catch(e) { s = data; } }
+  return (blobCache[path] = s);
+}
+function playVid(v, path){
+  path = path || v.getAttribute('data-src'); if (!path) return null;
+  const s = srcFor(path);
+  if (v.getAttribute('src') !== s) v.setAttribute('src', s);
+  v.onerror = () => { const d = asset(path); if (d && v.getAttribute('src') !== d) { v.setAttribute('src', d); v.play().catch(()=>{}); } };
+  return v.play();
+}
+function handleVideo(){
+  els.forEach((card, i) => {
+    const v = card.querySelector('video'); if (!v) return;
+    if (i === active){
+      const p = playVid(v, `${A}vid/${CARDS[i].slug}.mp4`);
+      if (p) p.then(() => card.classList.add('playing')).catch(() => {});
+    } else { v.pause(); card.classList.remove('playing'); }
+  });
+}
+function go(i){ active = Math.max(0, Math.min(CARDS.length-1, i)); layout(); }
+const next = () => go(active+1), prev = () => go(active-1);
+document.getElementById('next').addEventListener('click', next);
+document.getElementById('prev').addEventListener('click', prev);
+addEventListener('keydown', e => { if(e.key==='ArrowRight')next(); if(e.key==='ArrowLeft')prev(); if(e.key==='Escape'){closePanel(); showView('home');} });
+
+let wheelLock=false;
+document.getElementById('carousel').addEventListener('wheel', e => {
+  const d = Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;
+  if (Math.abs(d)<8||wheelLock) return; e.preventDefault(); wheelLock=true;
+  d>0?next():prev(); setTimeout(()=>wheelLock=false,520);
+}, { passive:false });
+
+let x0=null; const car=document.getElementById('carousel');
+car.addEventListener('touchstart', e=>x0=e.touches[0].clientX, {passive:true});
+car.addEventListener('touchend', e=>{ if(x0===null)return; const dx=e.changedTouches[0].clientX-x0;
+  if(Math.abs(dx)>45) dx<0?next():prev(); x0=null; });
+
+// ---- overlay pages (experiences + section views) ----
+const BALKANS = ['albania','montenegro','croatia'];
+function playPageVideo(v){ playVid(v); }
+const overlayIds = ['page-india','page-balkans','view-photography','view-films','view-itineraries','view-about','view-contact'];
+function closeAllOverlays(){
+  overlayIds.forEach(id => { const el = document.getElementById(id); if (!el) return;
+    el.classList.remove('open'); el.querySelectorAll('video').forEach(v => v.pause());
+    el.querySelectorAll('.film-tile.playing').forEach(t => t.classList.remove('playing')); });
+}
+function openOverlay(id){
+  els.forEach(c => { const v = c.querySelector('video'); if (v) v.pause(); });
+  closeAllOverlays();
+  const el = document.getElementById(id); if (!el) return;
+  el.classList.add('open'); el.scrollTop = 0;
+  const hero = el.querySelector('.p-hero video'); if (hero) playPageVideo(hero);
+}
+document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', () => showView('home')));
+
+// videos that play when scrolled into view (motion sections)
+const vio = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) playPageVideo(e.target); else e.target.pause(); });
+}, { threshold: 0.35 });
+document.querySelectorAll('.motion-grid video').forEach(v => vio.observe(v));
+
+// build the Films view, grouped by region (hover to play; tap on mobile)
+const filmsGrid = document.getElementById('filmsGrid');
+const EXTRA_FILMS = [
+  { slug:'india-streetkitchen', label:'India · Street Kitchen',      region:'India' },
+  { slug:'india-havelidetail',  label:'India · Haveli Detail',       region:'India' },
+  { slug:'india-rooftops1',     label:'India · Varanasi Rooftops',   region:'India' },
+  { slug:'india-palacewindow',  label:'India · Palace Window',       region:'India' },
+  { slug:'india-skyline',       label:'India · Old City Skyline',    region:'India' },
+  { slug:'india-rooftops2',     label:'India · Rooftop Repairs',     region:'India' },
+  { slug:'india-sadhu',         label:'India · Sadhu on the Street', region:'India' },
+  { slug:'india-jalebi',        label:'India · Jalebi Frying',       region:'India' },
+  { slug:'india-marketstreet',  label:'India · Market Street',       region:'India' },
+  { slug:'india-courtyard',     label:'India · Haveli Courtyard',    region:'India' },
+  { slug:'india-gangesdusk',    label:'India · Ganges at Dusk',      region:'India' },
+  { slug:'india-ghats',         label:'India · The Ghats',           region:'India' },
+  { slug:'india-bluealley',     label:'India · Blue Alley',          region:'India' },
+  { slug:'india-morningswim',   label:'India · Morning Swim',        region:'India' },
+  { slug:'india-makingsweets',  label:'India · Making Sweets',       region:'India' },
+  { slug:'india-sharpening',    label:'India · Sharpening Blades',   region:'India' },
+  { slug:'india-coveredmarket', label:'India · Covered Market',      region:'India' },
+  { slug:'india-fishingnets',   label:'India · Kerala Fishing Nets', region:'India' },
+  { slug:'india-shoreline',     label:'India · Kerala Shoreline',    region:'India' },
+  { slug:'italy-punta',        label:'Italy · Punta Chiappa',       region:'Alpine Europe' },
+  { slug:'turkey',             label:'Türkiye · Istanbul',          region:'Türkiye' },
+  { slug:'swiss-stechelberg',  label:'Switzerland · Stechelberg',   region:'Alpine Europe' },
+  { slug:'cambodia-angkor',    label:'Cambodia · Angkor Wat',       region:'Southeast Asia' },
+  { slug:'india-varanasi2',    label:'India · Varanasi',            region:'India' },
+  { slug:'italy-stelvio',      label:'Italy · Stelvio Pass',        region:'Alpine Europe' },
+  { slug:'thailand-pai',       label:'Thailand · Pai',              region:'Southeast Asia' },
+  { slug:'montenegro2',        label:'Montenegro · The Coast',      region:'The Balkans' },
+  { slug:'gordes',             label:'France · Gordes',             region:'Alpine Europe' },
+  { slug:'venice',             label:'Italy · Venice',              region:'Alpine Europe' },
+  { slug:'valgardena',         label:'Italy · Val Gardena',         region:'Alpine Europe' },
+  { slug:'lauterbrunnen',      label:'Switzerland · Lauterbrunnen', region:'Alpine Europe' },
+  { slug:'interlaken',         label:'Switzerland · Interlaken',    region:'Alpine Europe' },
+  { slug:'klosters',           label:'Switzerland · Klosters',      region:'Alpine Europe' },
+  { slug:'khaosok-canoe',      label:'Thailand · Khao Sok',         region:'Southeast Asia' },
+  { slug:'sapa-rice',          label:'Vietnam · Sa Pa',             region:'Southeast Asia' },
+  { slug:'tavan',              label:'Vietnam · Ta Van',            region:'Southeast Asia' },
+  { slug:'hagiang-yenminh',    label:'Vietnam · Hà Giang',          region:'Southeast Asia' },
+  { slug:'luangprabang',       label:'Laos · Luang Prabang',        region:'Southeast Asia' },
+  { slug:'vangvieng-lagoon',   label:'Laos · Vang Vieng',           region:'Southeast Asia' },
+  { slug:'nusapenida-water',   label:'Indonesia · Nusa Penida',     region:'Indonesia' },
+  { slug:'lombok-secret',      label:'Indonesia · Lombok',          region:'Indonesia' },
+  { slug:'bambu-indah',        label:'Indonesia · Ubud',            region:'Indonesia' },
+  { slug:'croatia-waters',     label:'Croatia · Korčula',           region:'The Balkans' },
+  { slug:'korcula-night',      label:'Croatia · Korčula by night',  region:'The Balkans' },
+  { slug:'budva',              label:'Montenegro · Budva',          region:'The Balkans' },
+  { slug:'blueeye',            label:'Albania · The Blue Eye',      region:'The Balkans' },
+  { slug:'istanbul',           label:'Türkiye · Istanbul',          region:'Türkiye' },
+  { slug:'umbrella-istanbul',  label:'Türkiye · Umbrella Street',   region:'Türkiye' },
+];
+function makeFilmTile(imgPath, vidPath, label){
+  const tile = document.createElement('div'); tile.className = 'film-tile';
+  tile.innerHTML = `<img src="${asset(imgPath)}" alt="${label}">
+    <video muted loop playsinline preload="none" data-src="${vidPath}"></video>
+    <div class="loc">${label}</div>`;
+  const v = tile.querySelector('video');
+  const play = () => { playPageVideo(v); tile.classList.add('playing'); };
+  const stop = () => { v.pause(); tile.classList.remove('playing'); };
+  tile.addEventListener('mouseenter', play);
+  tile.addEventListener('mouseleave', stop);
+  tile.addEventListener('click', () => tile.classList.contains('playing') ? stop() : play());
+  return tile;
+}
+const filmItems = [
+  ...CARDS.map(c => ({ img:`${A}img/${c.slug}.jpg`, vid:`${A}vid/${c.slug}.mp4`, label:`${c.country} · ${c.sub}`, region:c.region })),
+  ...EXTRA_FILMS.map(f => ({ img:`assets/films/img/${f.slug}.jpg`, vid:`assets/films/vid/${f.slug}.mp4`, label:f.label, region:f.region })),
+];
+['India','Southeast Asia','The Balkans','Alpine Europe','Indonesia','Türkiye'].forEach(region => {
+  const items = filmItems.filter(f => f.region === region);
+  if (!items.length) return;
+  const head = document.createElement('div'); head.className = 'region-head';
+  head.innerHTML = `<h2>${region}</h2><span class="count">${items.length} film${items.length>1?'s':''}</span>`;
+  const grid = document.createElement('div'); grid.className = 'films-grid';
+  items.forEach(f => grid.appendChild(makeFilmTile(f.img, f.vid, f.label)));
+  filmsGrid.appendChild(head); filmsGrid.appendChild(grid);
+});
+
+// ---- view switching ----
+function setActiveNav(name){
+  document.querySelectorAll('.site-links a').forEach(a =>
+    a.classList.toggle('active', a.getAttribute('data-view') === name));
+}
+function showView(name){
+  document.getElementById('mobileMenu').classList.remove('open');
+  document.getElementById('burger').classList.remove('open');
+  if (name === 'home'){ closeAllOverlays(); handleVideo(); setActiveNav('home'); }
+  else { openOverlay('view-' + name); setActiveNav(name); }
+}
+document.querySelectorAll('[data-view]').forEach(a =>
+  a.addEventListener('click', () => showView(a.getAttribute('data-view'))));
+const burger = document.getElementById('burger'), mobileMenu = document.getElementById('mobileMenu');
+burger.addEventListener('click', () => { const o = mobileMenu.classList.toggle('open'); burger.classList.toggle('open', o); });
+
+// contact form: submit to Netlify without leaving the page
+const cform = document.querySelector('.contact-form');
+if (cform) cform.addEventListener('submit', e => {
+  e.preventDefault();
+  const body = new URLSearchParams(new FormData(cform)).toString();
+  const done = () => { document.getElementById('formSuccess').style.display = 'block'; cform.reset(); };
+  fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body }).then(done).catch(done);
+});
+
+// explore button -> India page, shared Balkans page, or placeholder panel
+const panel = document.getElementById('panel');
+document.getElementById('ov-explore').addEventListener('click', () => {
+  const c = CARDS[active];
+  if (c.slug === 'india'){ openOverlay('page-india'); return; }
+  if (BALKANS.includes(c.slug)){ openOverlay('page-balkans'); return; }
+  document.getElementById('pn-region').textContent = c.region;
+  document.getElementById('pn-country').textContent = c.country;
+  document.getElementById('pn-sub').textContent = c.sub;
+  document.getElementById('pn-itin').textContent = c.country + ' is still in the works. To see a finished example of what each country page will become, head back to the home page and open the Explore page for India, or the Balkans (Montenegro, Albania, or Croatia).';
+  document.getElementById('pn-route').textContent = 'Experience page in progress';
+  panel.classList.add('open');
+});
+function closePanel(){ panel.classList.remove('open'); }
+document.getElementById('pn-back').addEventListener('click', closePanel);
+
+addEventListener('resize', layout);
+layout();
+</script>
+</body>
+</html>
